@@ -1,0 +1,51 @@
+{
+  "name": "@elsm/mcp",
+  "version": "0.1.0",
+  "description": "Local MCP bridge for Easy Local Storage Manager: lets any AI agent (Claude Code, Cursor, Codex, Gemini CLI, ...) read and write the real browser's storage through the ELSM extension.",
+  "license": "MIT",
+  "author": {
+    "name": "Nowshad Hossain Rahat"
+  },
+  "type": "commonjs",
+  "main": "dist/cli.js",
+  "bin": {
+    "elsm-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "browser",
+    "devtools",
+    "localstorage",
+    "sessionstorage",
+    "cookies",
+    "indexeddb",
+    "ai-agents",
+    "chrome-extension"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun run dist/cli.js --selftest"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3"
+  }
+}
