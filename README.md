@@ -6,6 +6,14 @@ that speaks stdio MCP — read and write the **real** browser storage
 (localStorage, sessionStorage, cookies, IndexedDB) of the tab you're looking
 at, through the [ELSM browser extension](https://easylocalstorage.dev).
 
+> **Requires the browser extension.** The bridge has no storage access of its
+> own — the extension is what reads and writes your browser. Install
+> **Easy Local Storage Manager** from the
+> [Chrome Web Store](https://chromewebstore.google.com/detail/cnmpfamlolfgahjambofnemellgdddia)
+> (Firefox: build it from the
+> [extension repo](https://github.com/nowshad-hossain-rahat/easy-local-storage-manager)
+> and load `extension/build/firefox` unpacked).
+
 ```
 Your AI agent (Claude, Codex, Cursor, ...)
         │ stdio (MCP protocol)
@@ -21,15 +29,42 @@ Your AI agent (Claude, Codex, Cursor, ...)
 
 ## Install
 
+Three steps, in this order — the bridge is useless until the extension is
+installed and paired.
+
+### 1. Install the extension
+
+Install **Easy Local Storage Manager** from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/cnmpfamlolfgahjambofnemellgdddia)
+— that's where agent access, the pairing token and the **Connected agents**
+screen live. Firefox: build from the
+[extension repo](https://github.com/nowshad-hossain-rahat/easy-local-storage-manager).
+
+### 2. Run the bridge
+
 ```bash
 npx @elsm/mcp --port 39231
 ```
 
 The first run creates a pairing token at `~/.elsm-bridge/token` (mode 0600).
-Paste that token into the ELSM sidebar → **Agent access** page once per
-browser, then point your MCP client at `npx -y @elsm/mcp` — see the
-[setup guide](https://easylocalstorage.dev/docs) for per-client stanzas
-(Claude Code, Codex, Cursor, ZCode, OpenCode, generic `mcpServers`).
+Open the ELSM sidebar → **Agent access** and paste that token once per browser.
+
+### 3. Point your MCP client at it
+
+```json
+{
+  "mcpServers": {
+    "elsm": {
+      "command": "npx",
+      "args": ["-y", "@elsm/mcp", "--port", "39231"]
+    }
+  }
+}
+```
+
+The [setup guide](https://easylocalstorage.dev/docs) has the exact stanza for
+Claude Code, Codex, Cursor, ZCode, OpenCode and a generic `mcpServers` example,
+and `npx @elsm/mcp --print-config` prints them with your real paths.
 
 ## Tools
 
@@ -91,9 +126,17 @@ bun run test       # dist/cli.js --selftest
 
 The wire contract with the extension is duplicated by design: the canonical
 protocol types live in `src/types.ts`, and the ELSM extension repo keeps a
-hand-mirrored copy (`extension/src/shared/types/agent-bridge.types.ts`). Change
-both in the same change and bump the protocol version in both files —
+hand-mirrored copy
+([`extension/src/shared/types/agent-bridge.types.ts`](https://github.com/nowshad-hossain-rahat/easy-local-storage-manager/blob/main/extension/src/shared/types/agent-bridge.types.ts)).
+Change both in the same change and bump the protocol version in both files —
 mismatches are refused at the handshake.
+
+## Links
+
+- **Extension (Chrome Web Store):** [cnmpfamlolfgahjambofnemellgdddia](https://chromewebstore.google.com/detail/cnmpfamlolfgahjambofnemellgdddia)
+- **Setup guide:** [easylocalstorage.dev/docs](https://easylocalstorage.dev/docs)
+- **Extension source:** [nowshad-hossain-rahat/easy-local-storage-manager](https://github.com/nowshad-hossain-rahat/easy-local-storage-manager)
+- **Bridge source:** [nowshad-hossain-rahat/elsm-mcp](https://github.com/nowshad-hossain-rahat/elsm-mcp)
 
 ## License
 
