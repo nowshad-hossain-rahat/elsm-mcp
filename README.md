@@ -4,7 +4,8 @@
 agent — Claude Code, Cursor, Codex, Gemini CLI, ZCode, OpenCode or anything
 that speaks stdio MCP — read and write the **real** browser storage
 (localStorage, sessionStorage, cookies, IndexedDB) of the tab you're looking
-at, through the [ELSM browser extension](https://easylocalstorage.dev).
+at, through the
+[ELSM browser extension](https://chromewebstore.google.com/detail/cnmpfamlolfgahjambofnemellgdddia).
 
 > **Requires the browser extension.** The bridge has no storage access of its
 > own — the extension is what reads and writes your browser. Install
