@@ -1,6 +1,6 @@
 {
   "name": "@elsm/mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Local MCP bridge for Easy Local Storage Manager: lets any AI agent (Claude Code, Cursor, Codex, Gemini CLI, ...) read and write the real browser's storage through the ELSM extension.",
   "license": "MIT",
   "author": {
