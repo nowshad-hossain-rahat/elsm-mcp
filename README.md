@@ -90,10 +90,10 @@ bun run test       # dist/cli.js --selftest
 ```
 
 The wire contract with the extension is duplicated by design: the canonical
-protocol types live in `src/types.ts`, and the extension keeps a hand-mirrored
-copy (`extension/src/shared/types/agent-bridge.types.ts`). Change both in the
-same commit and bump the protocol version in both files — mismatches are
-refused at the handshake.
+protocol types live in `src/types.ts`, and the ELSM extension repo keeps a
+hand-mirrored copy (`extension/src/shared/types/agent-bridge.types.ts`). Change
+both in the same change and bump the protocol version in both files —
+mismatches are refused at the handshake.
 
 ## License
 
