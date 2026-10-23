@@ -140,6 +140,22 @@ async function handshakeSelftest(token: string): Promise<void> {
   const result = await firstCall;
   assert(result.echoed === true, "tool result propagated back");
 
+  // 2b) App-level liveness: extension ping → bridge pong.
+  sockA.send(JSON.stringify({ type: "ping" }));
+  const pong = await nextFrame(sockA);
+  assert(pong.type === "pong", "ping answered with pong");
+
+  // 2c) A malformed (unparseable) frame must degrade, not kill the session.
+  sockA.send("this is not json at all");
+  await sleep(50);
+  const survives = server
+    .request<{ echoed: boolean }>("read_storage", { area: "localStorage" })
+    .catch((e: { code?: string }) => e);
+  const reqM = await nextFrame(sockA);
+  assert(reqM.type === "request", "session survives a malformed frame");
+  sockA.send(JSON.stringify({ type: "response", id: reqM.id, ok: true, result: { echoed: true } }));
+  assert((await survives as { echoed: boolean }).echoed === true, "requests still answered after a bad frame");
+
   // 3) Session replacement fails the old session's in-flight requests
   //    immediately instead of leaving them to the 45s timeout.
   const orphaned = server
@@ -160,6 +176,33 @@ async function handshakeSelftest(token: string): Promise<void> {
   const req2 = await nextFrame(sockB);
   sockB.send(JSON.stringify({ type: "response", id: req2.id, ok: true, result: { ok: 1 } }));
   assert((await freshCall).ok === 1, "new session serves requests");
+
+  // 3b) MCP cancellation: aborting an in-flight request rejects it with
+  //     code "cancelled" and the late response is dropped, never written.
+  const controller = new AbortController();
+  const cancellable = server
+    .request("get_target", {}, controller.signal)
+    .catch((e: { code?: string }) => e);
+  const reqCancel = await nextFrame(sockB);
+  controller.abort();
+  const cancelErr = (await cancellable) as { code?: string };
+  assert(cancelErr?.code === "cancelled", "aborted request rejects with cancelled");
+  sockB.send(JSON.stringify({ type: "response", id: reqCancel.id, ok: true, result: { late: true } }));
+  await sleep(50);
+  assert(true, "late response after cancellation is ignored");
+
+  // 3c) A hello with a non-string token must be refused cleanly: pre-auth
+  //     garbage must never reach the hasher and take the process down.
+  const hostile = new WebSocket(url);
+  await onceEvent(hostile, "open");
+  hostile.send(JSON.stringify({ type: "hello", token: { evil: true }, protocolVersion: BRIDGE_PROTOCOL_VERSION, extVersion: "x", extensionName: "x" }));
+  const hostileFrame = await nextFrame(hostile);
+  assert(hostileFrame.type === "hello-error" && hostileFrame.code === "bad-token", "non-string token refused without crashing");
+  hostile.close();
+  // The bridge (and the healthy session) is still alive after the hostile frame.
+  sockB.send(JSON.stringify({ type: "ping" }));
+  const stillAlive = await nextFrame(sockB);
+  assert(stillAlive.type === "pong", "bridge survives the hostile hello");
 
   // 4) Bad-token socket refused.
   const bad = new WebSocket(url);

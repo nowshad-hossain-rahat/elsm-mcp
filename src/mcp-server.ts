@@ -24,7 +24,10 @@ export class McpServer {
     };
   }
 
-  async toolsCall(call: { name: string; args: unknown }): Promise<{
+  async toolsCall(
+    call: { name: string; args: unknown },
+    signal?: AbortSignal
+  ): Promise<{
     content: Array<{ type: string; text: string }>;
     isError?: boolean;
   }> {
@@ -49,7 +52,8 @@ export class McpServer {
     try {
       const result = await this.extensionSocket.request<BridgeAction>(
         def.action,
-        args
+        args,
+        signal
       );
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]

@@ -91,6 +91,12 @@ async function main(): Promise<void> {
   const port = await extensionSocket.start(args.port ?? DEFAULT_PORT, DEFAULT_HOST);
   log(`listening on ws://${DEFAULT_HOST}:${port} (bridge protocol v${BRIDGE_PROTOCOL_VERSION}, MCP ${MCP_LATEST_PROTOCOL_VERSION}+, token ${tokenFile})`);
 
+  // A dead MCP-client pipe must not take the process down with an unhandled
+  // EPIPE — the client is gone, so exiting quietly is the correct behavior.
+  process.stdout.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EPIPE") process.exit(0);
+  });
+
   const mcp = new McpServer(extensionSocket);
   const transport = new StdioTransport(
     (frame) => {
@@ -98,16 +104,18 @@ async function main(): Promise<void> {
     },
     () => {
       extensionSocket.stop();
-      process.exit(0);
+      // Let queued stdout frames drain and the WS server close before the
+      // event loop empties; the unref'd timer only fires if something hangs.
+      setTimeout(() => process.exit(0), 1_000).unref();
     }
   );
 
   transport.onRequest("initialize", (params) => Promise.resolve(mcp.initialize(params)));
   transport.onRequest("ping", () => Promise.resolve({}));
   transport.onRequest("tools/list", () => Promise.resolve(mcp.toolsList()));
-  transport.onRequest("tools/call", async (params: unknown) => {
+  transport.onRequest("tools/call", async (params: unknown, ctx) => {
     const call = parseToolCall(params);
-    return mcp.toolsCall(call);
+    return mcp.toolsCall(call, ctx?.signal);
   });
 
   transport.start();

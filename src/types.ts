@@ -34,6 +34,20 @@ export interface HelloErrorMessage {
   message: string;
 }
 
+/**
+ * v3 liveness probe sent by the extension on an idle timer; the bridge
+ * answers immediately. Complements the bridge's protocol-level WS pings
+ * (which browsers answer automatically) by letting the *extension* detect a
+ * half-open socket.
+ */
+export interface PingMessage {
+  type: "ping";
+}
+
+export interface PongMessage {
+  type: "pong";
+}
+
 export interface BridgeRequestMessage {
   type: "request";
   id: string;
@@ -60,13 +74,15 @@ export interface BridgeEventMessage {
 export type BridgeClientMessage =
   | HelloMessage
   | BridgeResponseMessage
-  | BridgeEventMessage;
+  | BridgeEventMessage
+  | PingMessage;
 
 export type BridgeServerMessage =
   | HelloAckMessage
   | HelloErrorMessage
   | BridgeRequestMessage
-  | BridgeEventMessage;
+  | BridgeEventMessage
+  | PongMessage;
 
 export type BridgeAction =
   | "get_target"
